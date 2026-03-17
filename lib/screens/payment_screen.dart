@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
 import '../providers/charging_session_provider.dart';
+import '../widgets/glass_card.dart';
 
 class PaymentScreen extends StatelessWidget {
   const PaymentScreen({super.key});
@@ -9,71 +11,149 @@ class PaymentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final session = Provider.of<ChargingSessionProvider>(context, listen: false);
+    final theme = Theme.of(context);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Payment Checkout'),
+        title: const Text('Checkout', style: TextStyle(fontWeight: FontWeight.bold)),
         automaticallyImplyLeading: false,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 80),
-            const SizedBox(height: 16),
-            const Text(
-              'Charging Complete',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+      body: Stack(
+        children: [
+          // Background Gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF0F3460),
+                  Color(0xFF16213E),
+                  Color(0xFF1A1A2E),
+                ],
+              ),
             ),
-            const SizedBox(height: 32),
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  children: [
-                    _buildSummaryRow('Energy Delivered', '${session.kwhDelivered.toStringAsFixed(2)} kWh'),
-                    const SizedBox(height: 12),
-                    _buildSummaryRow('Duration', _formatDuration(session.durationSeconds)),
-                    const SizedBox(height: 12),
-                    _buildSummaryRow('Rate', '฿${session.activeConnector?.pricePerKwh} / kWh'),
-                    const Divider(height: 32, thickness: 2),
-                    _buildSummaryRow(
-                      'Total Amount',
-                      '฿${session.currentCost.toStringAsFixed(2)}',
-                      isTotal: true,
+          ),
+          
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Success Animation
+                  Center(
+                    child: Container(
+                      height: 120,
+                      width: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: theme.primaryColor.withOpacity(0.1),
+                      ),
+                      child: const Icon(
+                        Icons.check_circle_outline,
+                        color: Color(0xFF00E676),
+                        size: 80,
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Charging Complete!',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Please review your receipt and proceed to payment.',
+                    style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.6)),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 40),
+                  
+                  // Digital Receipt Card
+                  GlassCard(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'RECEIPT',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2,
+                            color: Colors.white54,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        _buildSummaryRow('Energy Delivered', '${session.kwhDelivered.toStringAsFixed(2)} kWh'),
+                        const SizedBox(height: 16),
+                        _buildSummaryRow('Duration', _formatDuration(session.durationSeconds)),
+                        const SizedBox(height: 16),
+                        _buildSummaryRow('Rate', '฿${session.activeConnector?.pricePerKwh} / kWh'),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24.0),
+                          child: Divider(color: Colors.white24, thickness: 1),
+                        ),
+                        _buildSummaryRow(
+                          'Total Amount',
+                          '฿${session.currentCost.toStringAsFixed(2)}',
+                          isTotal: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+
+                  // Payment Buttons
+                  Container(
+                    width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF00E676), Color(0xFF00B0FF)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF00E676).withOpacity(0.4),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showMockPaymentDialog(context, session),
+                      icon: const Icon(Icons.qr_code, color: Colors.black),
+                      label: const Text('Pay via PromptPay', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showMockPaymentDialog(context, session),
+                      icon: const Icon(Icons.credit_card, color: Colors.white),
+                      label: const Text('Pay via Credit Card', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: () {
-                _showMockPaymentDialog(context, session);
-              },
-              icon: const Icon(Icons.qr_code, color: Colors.white),
-              label: const Text('Pay via PromptPay', style: TextStyle(color: Colors.white, fontSize: 18)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF134A81), // Bank blue color
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () {
-                _showMockPaymentDialog(context, session);
-              },
-              icon: const Icon(Icons.credit_card),
-              label: const Text('Pay via Credit Card', style: TextStyle(fontSize: 18)),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -85,17 +165,17 @@ class PaymentScreen extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: isTotal ? 20 : 16,
+            fontSize: isTotal ? 18 : 16,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: isTotal ? Colors.black : Colors.grey[700],
+            color: isTotal ? Colors.white : Colors.white.withOpacity(0.7),
           ),
         ),
         Text(
           value,
           style: TextStyle(
-            fontSize: isTotal ? 24 : 16,
+            fontSize: isTotal ? 28 : 16,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-            color: isTotal ? Colors.teal : Colors.black,
+            color: isTotal ? const Color(0xFF00E676) : Colors.white,
           ),
         ),
       ],
@@ -114,13 +194,19 @@ class PaymentScreen extends StatelessWidget {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Processing Payment'),
-          content: const Column(
+          backgroundColor: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Processing Payment', style: TextStyle(color: Colors.white)),
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Simulating API call to Payment Gateway...'),
+              const CircularProgressIndicator(color: Color(0xFF00E676)),
+              const SizedBox(height: 24),
+              Text(
+                'Simulating API call to Payment Gateway...',
+                style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         );
@@ -134,7 +220,11 @@ class PaymentScreen extends StatelessWidget {
         session.completePayment();
         
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment Successful! Thank you.'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Payment Successful! Thank you.', style: TextStyle(fontWeight: FontWeight.bold)),
+            backgroundColor: Color(0xFF00E676),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
         
         session.reset();
