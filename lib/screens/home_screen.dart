@@ -53,7 +53,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(station.status),
-                      const Spacer(),
+                      const SizedBox(width: 16),
                       Text('${station.connectors.length} Connectors')
                     ],
                   )
