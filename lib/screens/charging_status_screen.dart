@@ -2,20 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
+import 'dart:ui';
 import '../providers/charging_session_provider.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/glow_button.dart';
+import '../utils/theme.dart';
 
 class ChargingStatusScreen extends StatelessWidget {
   const ChargingStatusScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Charging Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Charging Dashboard', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         automaticallyImplyLeading: false, 
       ),
       body: Stack(
@@ -27,9 +28,9 @@ class ChargingStatusScreen extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF0F3460),
-                  Color(0xFF16213E),
-                  Color(0xFF1A1A2E),
+                  AppTheme.surfaceLight,
+                  AppTheme.backgroundBlack,
+                  AppTheme.backgroundBlack,
                 ],
               ),
             ),
@@ -39,14 +40,14 @@ class ChargingStatusScreen extends StatelessWidget {
             child: Consumer<ChargingSessionProvider>(
               builder: (context, session, child) {
                 if (session.activeConnector == null) {
-                  return const Center(child: Text('No active session.', style: TextStyle(color: Colors.white)));
+                  return Center(child: Text('No active session.', style: Theme.of(context).textTheme.bodyLarge));
                 }
 
                 if (session.state == ChargingState.paying) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     context.pushReplacement('/payment');
                   });
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF00E676)));
+                  return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
                 }
 
                 final isCharging = session.state == ChargingState.charging;
@@ -62,19 +63,20 @@ class ChargingStatusScreen extends StatelessWidget {
                           children: [
                             Text(
                               session.activeStation?.name ?? 'Unknown Station',
-                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
+                                color: AppTheme.electricBlue.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppTheme.electricBlue.withOpacity(0.3)),
                               ),
                               child: Text(
                                 'Connector: ${session.activeConnector?.type} (${session.activeConnector?.powerKw} kW)',
-                                style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9)),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.electricBlue),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -85,43 +87,58 @@ class ChargingStatusScreen extends StatelessWidget {
 
                       // Animated Charging Graphic
                       SizedBox(
-                        height: 250,
+                        height: 280,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
                             // Glowing background for charging state
                             if (isCharging)
                               Container(
-                                width: 200,
-                                height: 200,
+                                width: 220,
+                                height: 220,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF00E676).withOpacity(0.3),
-                                      blurRadius: 50,
-                                      spreadRadius: 20,
+                                      color: AppTheme.neonGreen.withOpacity(0.15),
+                                      blurRadius: 60,
+                                      spreadRadius: 30,
                                     ),
                                   ],
+                                  border: Border.all(
+                                    color: AppTheme.neonGreen.withOpacity(0.5),
+                                    width: 2,
+                                  )
                                 ),
                               ),
                             
                             // Lottie Animation (Fallback to Icon if failing)
                             if (isCharging)
                               Lottie.network(
-                                'https://lottie.host/80dc178f-ef81-4eb2-8af5-430939eb9f8c/u3A1rC9OqA.json', // Sample abstract energy ring
-                                width: 250,
-                                height: 250,
+                                'https://lottie.host/80dc178f-ef81-4eb2-8af5-430939eb9f8c/u3A1rC9OqA.json',
+                                width: 280,
+                                height: 280,
                                 fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(Icons.bolt, size: 100, color: Color(0xFF00E676));
+                                  return const Icon(Icons.bolt, size: 100, color: AppTheme.neonGreen);
                                 },
                               )
                             else
-                              Icon(
-                                Icons.ev_station,
-                                size: 120,
-                                color: _getStatusColor(session.state).withOpacity(0.8),
+                              Container(
+                                width: 200,
+                                height: 200,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: _getStatusColor(session.state).withOpacity(0.3),
+                                    width: 4,
+                                  )
+                                ),
+                                child: Icon(
+                                  Icons.ev_station,
+                                  size: 80,
+                                  color: _getStatusColor(session.state).withOpacity(0.8),
+                                ),
                               ),
 
                             // Central Text
@@ -129,32 +146,34 @@ class ChargingStatusScreen extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 if (isCharging)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.5),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
                                     child: BackdropFilter(
-                                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                                      child: Text(
-                                        '${session.kwhDelivered.toStringAsFixed(2)} kWh',
-                                        style: const TextStyle(
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.backgroundBlack.withOpacity(0.4),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                        ),
+                                        child: Text(
+                                          '${session.kwhDelivered.toStringAsFixed(2)} kWh',
+                                          style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                                            color: AppTheme.neonGreen,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 12),
                                 Text(
                                   _getStatusText(session.state),
-                                  style: TextStyle(
-                                    fontSize: 18,
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: _getStatusColor(session.state),
-                                    letterSpacing: 1.2,
+                                    letterSpacing: 2.0,
                                   ),
                                 ),
                               ],
@@ -171,22 +190,38 @@ class ChargingStatusScreen extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildStatColumn('Time', _formatDuration(session.durationSeconds)),
-                              Container(width: 1, height: 40, color: Colors.white.withOpacity(0.2)),
-                              _buildStatColumn('Cost', '฿${session.currentCost.toStringAsFixed(2)}'),
+                              _buildStatColumn(context, 'Time', _formatDuration(session.durationSeconds)),
+                              Container(width: 1, height: 40, color: Colors.white.withOpacity(0.1)),
+                              _buildStatColumn(context, 'Cost', '฿${session.currentCost.toStringAsFixed(2)}'),
                             ],
                           ),
                         ),
                       
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 48),
 
                       // Action Buttons
                       if (session.state == ChargingState.idle)
-                        _buildActionBtn('Start Charging', theme.primaryColor, session.startCharging)
+                        SizedBox(
+                          width: double.infinity,
+                          child: GlowButton(
+                            text: 'Start Charging', 
+                            color: AppTheme.neonGreen, 
+                            icon: Icons.power,
+                            onPressed: session.startCharging,
+                          ),
+                        )
                       else if (isStarting)
-                        const Center(child: CircularProgressIndicator(color: Color(0xFF00E676)))
+                        const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen))
                       else if (isCharging)
-                        _buildActionBtn('Stop Charging', Colors.redAccent, session.stopCharging)
+                        SizedBox(
+                          width: double.infinity,
+                          child: GlowButton(
+                            text: 'Stop Charging', 
+                            color: AppTheme.errorRed, 
+                            icon: Icons.stop,
+                            onPressed: session.stopCharging,
+                          ),
+                        )
                     ],
                   ),
                 );
@@ -198,39 +233,12 @@ class ChargingStatusScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionBtn(String label, Color color, VoidCallback onPressed) {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 0,
-        ),
-        child: Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-      ),
-    );
-  }
-
-  Widget _buildStatColumn(String label, String value) {
+  Widget _buildStatColumn(BuildContext context, String label, String value) {
     return Column(
       children: [
-        Text(label, style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.6))),
+        Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
         const SizedBox(height: 8),
-        Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+        Text(value, style: Theme.of(context).textTheme.displaySmall),
       ],
     );
   }
@@ -244,13 +252,13 @@ class ChargingStatusScreen extends StatelessWidget {
   Color _getStatusColor(ChargingState state) {
     switch (state) {
       case ChargingState.idle:
-        return const Color(0xFF00B0FF);
+        return AppTheme.electricBlue;
       case ChargingState.starting:
-        return Colors.orangeAccent;
+        return AppTheme.warningOrange;
       case ChargingState.charging:
-        return const Color(0xFF00E676);
+        return AppTheme.neonGreen;
       default:
-        return Colors.redAccent;
+        return AppTheme.errorRed;
     }
   }
 

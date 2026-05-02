@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'dart:math';
+import '../utils/theme.dart';
+import '../widgets/glow_button.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -16,6 +17,7 @@ class _ScannerScreenState extends State<ScannerScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
+    // Adjusted scanner animation
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -34,18 +36,18 @@ class _ScannerScreenState extends State<ScannerScreen> with SingleTickerProvider
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Scan Charger QR', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Scan Charger QR', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: Stack(
         children: [
-          // Simulated Camera Background
+          // Simulated Camera Background (Darker for contrast)
           Container(
-            color: Colors.black,
+            color: AppTheme.backgroundBlack,
             child: Center(
               child: Opacity(
-                opacity: 0.3,
+                opacity: 0.25,
                 child: Image.network(
                   'https://images.unsplash.com/photo-1593941707882-a5bba14938cb?auto=format&fit=crop&q=80',
                   fit: BoxFit.cover,
@@ -67,8 +69,15 @@ class _ScannerScreenState extends State<ScannerScreen> with SingleTickerProvider
                     width: 250,
                     height: 250,
                     decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFF00E676), width: 3),
-                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.electricBlue.withOpacity(0.5), width: 3),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.electricBlue.withOpacity(0.1),
+                          blurRadius: 50,
+                          spreadRadius: 10,
+                        )
+                      ],
                     ),
                     child: AnimatedBuilder(
                       animation: _animationController,
@@ -76,18 +85,18 @@ class _ScannerScreenState extends State<ScannerScreen> with SingleTickerProvider
                         return Stack(
                           children: [
                             Positioned(
-                              top: _animationController.value * 230,
+                              top: _animationController.value * 230, // matches container height - thickness
                               left: 0,
                               right: 0,
                               child: Container(
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF00E676),
+                                  color: AppTheme.neonGreen,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF00E676).withOpacity(0.8),
-                                      blurRadius: 10,
-                                      spreadRadius: 2,
+                                      color: AppTheme.neonGreen.withOpacity(0.8),
+                                      blurRadius: 15,
+                                      spreadRadius: 5,
                                     )
                                   ],
                                 ),
@@ -100,9 +109,9 @@ class _ScannerScreenState extends State<ScannerScreen> with SingleTickerProvider
                   ),
                 ),
                 const SizedBox(height: 32),
-                const Text(
+                Text(
                   'Align QR code within the frame to scan',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                  style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const Spacer(),
                 
@@ -110,7 +119,8 @@ class _ScannerScreenState extends State<ScannerScreen> with SingleTickerProvider
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E1E),
+                    color: AppTheme.surfaceDark,
+                    border: Border(top: BorderSide(color: AppTheme.electricBlue.withOpacity(0.1))),
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
                     boxShadow: [
                       BoxShadow(
@@ -122,11 +132,11 @@ class _ScannerScreenState extends State<ScannerScreen> with SingleTickerProvider
                   ),
                   child: Column(
                     children: [
-                      const Text(
-                        'Simulation/Web Fallback',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      Text(
+                        'Simulation / Web Fallback',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
@@ -137,26 +147,29 @@ class _ScannerScreenState extends State<ScannerScreen> with SingleTickerProvider
                                 hintText: 'Enter Charger ID (e.g. ST_001)',
                                 hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
                                 filled: true,
-                                fillColor: Colors.black,
+                                fillColor: AppTheme.backgroundBlack,
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(color: AppTheme.electricBlue.withOpacity(0.3)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: const BorderSide(color: AppTheme.electricBlue),
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          ElevatedButton(
-                            onPressed: () {
-                              final id = _mockIdController.text.isNotEmpty ? _mockIdController.text : 'ST_001';
-                              context.pushReplacement('/station/$id');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF00E676),
-                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            width: 120,
+                            child: GlowButton(
+                              text: 'Simulate',
+                              color: AppTheme.electricBlue,
+                              onPressed: () {
+                                final id = _mockIdController.text.isNotEmpty ? _mockIdController.text : 'ST_001';
+                                context.pushReplacement('/station/$id');
+                              },
                             ),
-                            child: const Text('Simulate', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                           ),
                         ],
                       )

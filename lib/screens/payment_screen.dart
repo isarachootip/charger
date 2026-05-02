@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
 import '../providers/charging_session_provider.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/glow_button.dart';
+import '../utils/theme.dart';
 
 class PaymentScreen extends StatelessWidget {
   const PaymentScreen({super.key});
@@ -11,12 +12,11 @@ class PaymentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final session = Provider.of<ChargingSessionProvider>(context, listen: false);
-    final theme = Theme.of(context);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Checkout', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Checkout', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         automaticallyImplyLeading: false,
       ),
       body: Stack(
@@ -28,9 +28,9 @@ class PaymentScreen extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF0F3460),
-                  Color(0xFF16213E),
-                  Color(0xFF1A1A2E),
+                  AppTheme.surfaceLight,
+                  AppTheme.backgroundBlack,
+                  AppTheme.backgroundBlack,
                 ],
               ),
             ),
@@ -49,54 +49,61 @@ class PaymentScreen extends StatelessWidget {
                       width: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: theme.primaryColor.withOpacity(0.1),
+                        color: AppTheme.neonGreen.withOpacity(0.1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.neonGreen.withOpacity(0.2),
+                            blurRadius: 30,
+                            spreadRadius: 5,
+                          )
+                        ]
                       ),
                       child: const Icon(
                         Icons.check_circle_outline,
-                        color: Color(0xFF00E676),
+                        color: AppTheme.neonGreen,
                         size: 80,
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Charging Complete!',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: Theme.of(context).textTheme.displaySmall,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Please review your receipt and proceed to payment.',
-                    style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.6)),
+                    style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 40),
                   
                   // Digital Receipt Card
                   GlassCard(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.all(32.0),
                     child: Column(
                       children: [
-                        const Text(
+                        Text(
                           'RECEIPT',
-                          style: TextStyle(
-                            fontSize: 16,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            letterSpacing: 4,
+                            color: AppTheme.textSecondary,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
-                            color: Colors.white54,
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        _buildSummaryRow('Energy Delivered', '${session.kwhDelivered.toStringAsFixed(2)} kWh'),
+                        const SizedBox(height: 32),
+                        _buildSummaryRow(context, 'Energy Delivered', '${session.kwhDelivered.toStringAsFixed(2)} kWh'),
                         const SizedBox(height: 16),
-                        _buildSummaryRow('Duration', _formatDuration(session.durationSeconds)),
+                        _buildSummaryRow(context, 'Duration', _formatDuration(session.durationSeconds)),
                         const SizedBox(height: 16),
-                        _buildSummaryRow('Rate', '฿${session.activeConnector?.pricePerKwh} / kWh'),
+                        _buildSummaryRow(context, 'Rate', '฿${session.activeConnector?.pricePerKwh} / kWh'),
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 24.0),
-                          child: Divider(color: Colors.white24, thickness: 1),
+                          child: Divider(color: Colors.white12, thickness: 1),
                         ),
                         _buildSummaryRow(
+                          context,
                           'Total Amount',
                           '฿${session.currentCost.toStringAsFixed(2)}',
                           isTotal: true,
@@ -107,31 +114,13 @@ class PaymentScreen extends StatelessWidget {
                   const SizedBox(height: 48),
 
                   // Payment Buttons
-                  Container(
+                  SizedBox(
                     width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF00E676), Color(0xFF00B0FF)],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF00E676).withOpacity(0.4),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton.icon(
+                    child: GlowButton(
+                      text: 'Pay via PromptPay',
+                      icon: Icons.qr_code,
+                      color: AppTheme.neonGreen,
                       onPressed: () => _showMockPaymentDialog(context, session),
-                      icon: const Icon(Icons.qr_code, color: Colors.black),
-                      label: const Text('Pay via PromptPay', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -142,13 +131,14 @@ class PaymentScreen extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: () => _showMockPaymentDialog(context, session),
                       icon: const Icon(Icons.credit_card, color: Colors.white),
-                      label: const Text('Pay via Credit Card', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+                      label: const Text('Pay via Credit Card', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.white.withOpacity(0.5), width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        side: BorderSide(color: Colors.white.withOpacity(0.2), width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                       ),
                     ),
                   ),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
@@ -158,25 +148,21 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, {bool isTotal = false}) {
+  Widget _buildSummaryRow(BuildContext context, String label, String value, {bool isTotal = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: isTotal ? 18 : 16,
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: isTotal ? Colors.white : Colors.white.withOpacity(0.7),
-          ),
+          style: isTotal 
+            ? Theme.of(context).textTheme.titleLarge 
+            : Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
         ),
         Text(
           value,
-          style: TextStyle(
-            fontSize: isTotal ? 28 : 16,
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
-            color: isTotal ? const Color(0xFF00E676) : Colors.white,
-          ),
+          style: isTotal 
+            ? Theme.of(context).textTheme.displaySmall?.copyWith(color: AppTheme.neonGreen)
+            : Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -194,17 +180,18 @@ class PaymentScreen extends StatelessWidget {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Processing Payment', style: TextStyle(color: Colors.white)),
+          backgroundColor: AppTheme.surfaceDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: AppTheme.electricBlue.withOpacity(0.3))),
+          title: Center(child: Text('Processing Payment', style: Theme.of(context).textTheme.titleLarge)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(color: Color(0xFF00E676)),
+              const SizedBox(height: 16),
+              const CircularProgressIndicator(color: AppTheme.neonGreen),
               const SizedBox(height: 24),
               Text(
                 'Simulating API call to Payment Gateway...',
-                style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -220,10 +207,17 @@ class PaymentScreen extends StatelessWidget {
         session.completePayment();
         
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment Successful! Thank you.', style: TextStyle(fontWeight: FontWeight.bold)),
-            backgroundColor: Color(0xFF00E676),
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: AppTheme.backgroundBlack),
+                const SizedBox(width: 12),
+                Text('Payment Successful! Thank you.', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.backgroundBlack)),
+              ],
+            ),
+            backgroundColor: AppTheme.neonGreen,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
         );
         

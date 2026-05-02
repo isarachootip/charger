@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/station_provider.dart';
 import '../widgets/glass_card.dart';
+import '../utils/theme.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -11,33 +12,30 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final stationProvider = Provider.of<StationProvider>(context);
     final stations = stationProvider.stations;
-    final theme = Theme.of(context);
-
+    
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('TW Charger', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('TW Charger', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () {},
+            icon: const Icon(Icons.history),
+            onPressed: () => context.push('/history'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => context.go('/login'),
           ),
         ],
       ),
       body: Stack(
         children: [
-          // Background Gradient
+          // Simulated Dark Map Background (Grid pattern)
           Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF1A1A2E),
-                  Color(0xFF16213E),
-                  Color(0xFF0F3460),
-                ],
-              ),
+            color: AppTheme.backgroundBlack,
+            child: CustomPaint(
+              painter: GridPainter(),
+              child: Container(),
             ),
           ),
           
@@ -51,21 +49,14 @@ class HomeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Charge your EV',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                          style: Theme.of(context).textTheme.displaySmall?.copyWith(color: AppTheme.electricBlue),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Find the fastest charging stations near you.',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white.withOpacity(0.7),
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 24),
                         // Featured Graphic
@@ -74,13 +65,13 @@ class HomeScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF00E676), Color(0xFF00B0FF)],
+                              colors: [AppTheme.neonGreen, AppTheme.electricBlue],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF00E676).withOpacity(0.4),
+                                color: AppTheme.neonGreen.withOpacity(0.3),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -88,20 +79,16 @@ class HomeScreen extends StatelessWidget {
                           ),
                           child: const Center(
                             child: Icon(
-                              Icons.electric_car,
+                              Icons.electric_bolt,
                               size: 100,
                               color: Colors.white,
                             ),
                           ),
                         ),
                         const SizedBox(height: 32),
-                        const Text(
+                        Text(
                           'Nearby Stations',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ],
                     ),
@@ -117,87 +104,81 @@ class HomeScreen extends StatelessWidget {
                         final station = stations[index];
                         final isAvailable = station.status == 'Available';
 
-                        return GlassCard(
-                          margin: const EdgeInsets.only(bottom: 16.0),
-                          padding: const EdgeInsets.all(20.0),
-                          onTap: () => context.push('/station/${station.id}'),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Icon(
-                                  Icons.ev_station,
-                                  size: 32,
-                                  color: theme.primaryColor,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      station.name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                      ),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: GestureDetector(
+                            onTap: () => context.push('/station/${station.id}'),
+                            child: GlassCard(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.surfaceLight.withOpacity(0.5),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: AppTheme.electricBlue.withOpacity(0.3)),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      station.address,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.white.withOpacity(0.6),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                    child: const Icon(
+                                      Icons.ev_station,
+                                      size: 32,
+                                      color: AppTheme.electricBlue,
                                     ),
-                                    const SizedBox(height: 8),
-                                    Row(
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: isAvailable ? const Color(0xFF00E676) : Colors.orange,
-                                            boxShadow: isAvailable ? [
-                                              const BoxShadow(
-                                                color: Color(0xFF00E676),
-                                                blurRadius: 6,
-                                              )
-                                            ] : null,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
                                         Text(
-                                          station.status,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.white.withOpacity(0.8),
-                                          ),
+                                          station.name,
+                                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                                         ),
-                                        const Spacer(),
+                                        const SizedBox(height: 4),
                                         Text(
-                                          '${station.connectors.length} Plugs',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.white.withOpacity(0.8),
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                                          station.address,
+                                          style: Theme.of(context).textTheme.bodyMedium,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            Container(
+                                              width: 10,
+                                              height: 10,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: isAvailable ? AppTheme.neonGreen : AppTheme.warningOrange,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: (isAvailable ? AppTheme.neonGreen : AppTheme.warningOrange).withOpacity(0.6),
+                                                    blurRadius: 8,
+                                                  )
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              station.status,
+                                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                                color: isAvailable ? AppTheme.neonGreen : AppTheme.warningOrange,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            Text(
+                                              '${station.connectors.length} Plugs',
+                                              style: Theme.of(context).textTheme.bodyMedium,
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         );
                       },
@@ -216,32 +197,50 @@ class HomeScreen extends StatelessWidget {
       floatingActionButton: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF00E676), Color(0xFF00B0FF)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF00E676).withOpacity(0.4),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
+              color: AppTheme.electricBlue.withOpacity(0.4),
+              blurRadius: 20,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: FloatingActionButton.extended(
           onPressed: () => context.push('/scanner'),
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppTheme.electricBlue,
           elevation: 0,
           highlightElevation: 0,
-          icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
-          label: const Text(
+          icon: const Icon(Icons.qr_code_scanner, color: AppTheme.backgroundBlack),
+          label: Text(
             'Scan to Charge',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: AppTheme.backgroundBlack, 
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
+}
+
+class GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppTheme.electricBlue.withOpacity(0.05)
+      ..strokeWidth = 1;
+
+    for (double i = 0; i < size.width; i += 40) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+    for (double i = 0; i < size.height; i += 40) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

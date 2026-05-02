@@ -4,9 +4,11 @@ import '../screens/station_details_screen.dart';
 import '../screens/scanner_screen.dart';
 import '../screens/charging_status_screen.dart';
 import '../screens/payment_screen.dart';
+import '../screens/login_screen.dart';
+import '../screens/history_screen.dart';
 
 final GoRouter appRouter = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/login',
   routes: [
     GoRoute(
       path: '/',
@@ -30,6 +32,14 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/payment',
       builder: (context, state) => const PaymentScreen(),
+    ),
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: '/history',
+      builder: (context, state) => const HistoryScreen(),
     ),
   ],
 );
